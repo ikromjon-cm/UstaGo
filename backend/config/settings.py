@@ -19,6 +19,10 @@ env = environ.Env(
     DATABASE_URL=(str, 'postgres://postgres:postgres@localhost:5432/ustago'),
     REDIS_URL=(str, 'redis://localhost:6379/0'),
     CELERY_BROKER_URL=(str, 'redis://localhost:6379/1'),
+    ANTHROPIC_API_KEY=(str, ''),
+    SUPABASE_URL=(str, ''),
+    SUPABASE_ANON_KEY=(str, ''),
+    SUPABASE_SERVICE_KEY=(str, ''),
     RAILWAY_ENVIRONMENT=(str, ''),
 )
 
