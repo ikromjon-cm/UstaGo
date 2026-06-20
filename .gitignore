@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Django
+backend/logs/
+backend/media/
+backend/staticfiles/
+backend/static/
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Flutter
+mobile/.dart_tool/
+mobile/.packages
+mobile/.pub/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/*.iml
+mobile/ios/.symlinks/
+mobile/ios/Pods/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/build/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+.docker/
+
+# Misc
+*.log
+*.pid
+*.seed

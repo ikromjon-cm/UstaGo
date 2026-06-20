@@ -1,0 +1,11 @@
+{
+  "title": "UstaGo Platform Dashboard",
+  "panels": [
+    {"title": "Active Users", "type": "stat", "targets": [{"expr": "sum(django_http_requests_total)", "legendFormat": "Users"}]},
+    {"title": "Orders per Minute", "type": "graph", "targets": [{"expr": "rate(django_http_requests_total[5m])", "legendFormat": "Orders"}]},
+    {"title": "API Response Time", "type": "graph", "targets": [{"expr": "rate(django_http_request_duration_seconds_sum[5m]) / rate(django_http_request_duration_seconds_count[5m])", "legendFormat": "Avg Response"}]},
+    {"title": "Redis Memory", "type": "gauge", "targets": [{"expr": "redis_memory_used_bytes", "legendFormat": "Redis"}]},
+    {"title": "PostgreSQL Connections", "type": "stat", "targets": [{"expr": "pg_stat_database_numbackends", "legendFormat": "Connections"}]}
+  ],
+  "time": {"from": "now-6h", "to": "now"}
+}
