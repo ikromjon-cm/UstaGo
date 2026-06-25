@@ -51,7 +51,7 @@ describe("MasterCard", () => {
 
   it("shows completed jobs", () => {
     render(<MasterCard {...baseProps} />);
-    expect(screen.getByText("145 jobs")).toBeInTheDocument();
+    expect(screen.getByText("145 jobs done")).toBeInTheDocument();
   });
 });
 
