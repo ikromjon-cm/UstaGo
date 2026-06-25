@@ -42,7 +42,9 @@ export default function RegisterPage() {
       toast.success("OTP sent to your phone");
       setStep("otp");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Registration failed");
+      const data = err.response?.data;
+      const msg = data?.message || (data?.errors?.length ? data.errors.map((e: any) => e.message).join(". ") : null) || "Registration failed";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

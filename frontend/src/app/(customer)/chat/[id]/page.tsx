@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Send, ChevronLeft, Paperclip, Phone } from "lucide-react";
-import { Header } from "@/components/layout/Header";
 import toast from "react-hot-toast";
 import { chatAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -19,13 +18,29 @@ export default function ChatDetailPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [otherUser, setOtherUser] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleWsMessage = useCallback((data: any) => {
-    if (data.type === "chat_message") {
-      setMessages(prev => {
-        if (prev.some(m => m.id === data.message.id)) return prev;
+    if (data.type === "chat_message" && data.message?.id) {
+      setMessages((prev) => {
+        if (prev.some((m) => String(m.id) === String(data.message.id))) return prev;
         return [...prev, data.message];
+      });
+    } else if (data.type === "new_message" && data.message_id) {
+      const normalized = {
+        id: data.message_id,
+        content: data.content,
+        sender: data.sender_id,
+        message_type: data.message_type,
+        file: data.file,
+        image: data.image,
+        created_at: data.created_at,
+      };
+      setMessages((prev) => {
+        if (prev.some((m) => String(m.id) === String(normalized.id))) return prev;
+        return [...prev, normalized];
       });
     } else if (data.type === "user_online") {
       setOtherUser((prev: any) => ({ ...prev, is_online: true }));
@@ -34,10 +49,7 @@ export default function ChatDetailPage() {
     }
   }, []);
 
-  const { send: wsSend } = useWebSocket(
-    id ? `chat/${id}` : null,
-    handleWsMessage,
-  );
+  useWebSocket(id ? `chat/${id}` : null, handleWsMessage);
 
   useEffect(() => {
     Promise.all([
@@ -57,26 +69,61 @@ export default function ChatDetailPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || sending) return;
+    const content = input.trim();
+    if (!content || sending) return;
+
     setSending(true);
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg = {
       id: tempId,
-      content: input,
+      content,
       sender: user?.id,
       message_type: "text",
       created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, optimisticMsg]);
+
+    setMessages((prev) => [...prev, optimisticMsg]);
     setInput("");
-    wsSend({ type: "message", content: input, message_type: "text" });
+
     try {
-      const res = await chatAPI.sendMessage(id as string, { content: input, message_type: "text" });
-      setMessages(prev => prev.map(m => m.id === tempId ? res.data : m));
+      const formData = new FormData();
+      formData.append("content", content);
+      formData.append("message_type", "text");
+
+      const res = await chatAPI.sendMessage(id as string, formData);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
     } catch {
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      toast.error("Failed to send message");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleCall = () => {
+    router.push(`/calls/${id}`);
+  };
+
+  const handleAttachment = async (file: File) => {
+    if (!file || uploading) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      const isImage = file.type.startsWith("image/");
+      formData.append("message_type", isImage ? "image" : "file");
+      formData.append("content", file.name);
+      formData.append(isImage ? "image" : "file", file);
+
+      const res = await chatAPI.sendMessage(id as string, formData);
+      setMessages((prev) => {
+        if (prev.some((m) => String(m.id) === String(res.data.id))) return prev;
+        return [...prev, res.data];
+      });
+    } catch {
+      toast.error("Failed to upload attachment");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -93,7 +140,7 @@ export default function ChatDetailPage() {
             {otherUser?.is_online ? "Online" : "Offline"}
           </p>
         </div>
-        <button className="btn-ghost p-2"><Phone size={20} /></button>
+        <button onClick={handleCall} className="btn-ghost p-2"><Phone size={20} /></button>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -118,7 +165,14 @@ export default function ChatDetailPage() {
 
       {!loading && <div className="border-t border-gray-100 dark:border-gray-800 p-4">
         <div className="flex items-center gap-2">
-          <button className="btn-ghost p-2"><Paperclip size={20} /></button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="btn-ghost p-2"
+            aria-label="Attach file"
+          >
+            <Paperclip size={20} />
+          </button>
           <input
             className="input flex-1"
             placeholder="Type a message..."
@@ -129,6 +183,17 @@ export default function ChatDetailPage() {
           <button onClick={handleSend} disabled={sending || !input.trim()} className="btn-primary p-3">
             <Send size={20} />
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleAttachment(file);
+              e.currentTarget.value = "";
+            }}
+          />
         </div>
       </div>}
     </div>

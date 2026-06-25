@@ -27,7 +27,9 @@ export default function LoginPage() {
       const defaultRoute = res.data.user.role === "master" ? "/dashboard" : "/";
       router.push(redirect || defaultRoute);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Login failed");
+      const data = err.response?.data;
+      const msg = data?.message || (data?.errors?.length ? data.errors.map((e: any) => e.message).join(". ") : null) || "Login failed";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

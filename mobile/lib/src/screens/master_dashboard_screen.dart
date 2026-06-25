@@ -231,7 +231,7 @@ class _MasterDashboardScreenState extends State<MasterDashboardScreen> {
           ),
           Switch(
             value: provider.online,
-            activeColor: AppTheme.success,
+            activeTrackColor: AppTheme.success,
             onChanged: provider.loading ? null : (_) => context.read<MasterProvider>().toggleOnline(),
           ),
           const SizedBox(width: 8),

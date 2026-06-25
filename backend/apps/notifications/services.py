@@ -59,7 +59,7 @@ class NotificationService:
 
     @staticmethod
     def send_telegram(chat_id, message):
-        bot_token = settings.env('TELEGRAM_BOT_TOKEN', default='')
+        bot_token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
         if bot_token:
             import requests
             try:

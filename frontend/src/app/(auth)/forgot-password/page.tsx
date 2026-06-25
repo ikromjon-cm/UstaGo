@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
       if (otpCode) localStorage.setItem("dev_otp", otpCode);
       toast.success("OTP sent to your phone");
       setStep("otp");
-    } catch { toast.error("Failed to send OTP"); }
+    } catch (err: any) { const d = err.response?.data; toast.error(d?.message || (d?.errors?.length ? d.errors.map((e: any) => e.message).join(". ") : null) || "Failed to send OTP"); }
     finally { setLoading(false); }
   };
 
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
       await authAPI.verifyOtp(phone, otp);
       toast.success("Verified");
       setStep("reset");
-    } catch { toast.error("Invalid OTP"); }
+    } catch (err: any) { const d = err.response?.data; toast.error(d?.message || (d?.errors?.length ? d.errors.map((e: any) => e.message).join(". ") : null) || "Invalid OTP"); }
     finally { setLoading(false); }
   };
 
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
       await authAPI.resetPassword(phone, otp, password);
       toast.success("Password reset successfully");
       router.push("/login");
-    } catch { toast.error("Failed to reset password"); }
+    } catch (err: any) { const d = err.response?.data; toast.error(d?.message || (d?.errors?.length ? d.errors.map((e: any) => e.message).join(". ") : null) || "Failed to reset password"); }
     finally { setLoading(false); }
   };
 

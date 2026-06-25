@@ -95,7 +95,11 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.analytics",
     "apps.ai",
+    "apps.admin_settings",
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -545,6 +549,7 @@ ESKIZ_TOKEN = env("ESKIZ_TOKEN", default="")
 TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
 TWILIO_PHONE_NUMBER = env("TWILIO_PHONE_NUMBER", default="")
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024

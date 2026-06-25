@@ -33,12 +33,14 @@ class ChatRoom {
   final String? lastMessage;
   final int unreadCount;
   final String updatedAt;
+  final List<Participant> participants;
 
   ChatRoom({
     required this.id,
     this.lastMessage,
     this.unreadCount = 0,
     required this.updatedAt,
+    this.participants = const [],
   });
 
   factory ChatRoom.fromJson(Map<String, dynamic> json) => ChatRoom(
@@ -46,5 +48,27 @@ class ChatRoom {
     lastMessage: json['last_message']?['content'],
     unreadCount: json['unread_count'] ?? 0,
     updatedAt: json['updated_at'],
+    participants: (json['participants_detail'] as List<dynamic>?)
+        ?.map((p) => Participant.fromJson(p as Map<String, dynamic>))
+        .toList() ?? [],
+  );
+
+  String get displayName {
+    if (participants.isEmpty) return 'Chat';
+    return participants.map((p) => p.fullName).join(', ');
+  }
+}
+
+class Participant {
+  final String id;
+  final String fullName;
+  final String? avatar;
+
+  Participant({required this.id, required this.fullName, this.avatar});
+
+  factory Participant.fromJson(Map<String, dynamic> json) => Participant(
+    id: json['id'],
+    fullName: json['full_name'] ?? '',
+    avatar: json['avatar'],
   );
 }

@@ -56,10 +56,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Theme.of(context).primaryColor,
-                          child: Text(room.id.substring(0, 2).toUpperCase(),
+                          child: Text(room.displayName.isNotEmpty ? room.displayName[0].toUpperCase() : '?',
                               style: const TextStyle(color: Colors.white)),
                         ),
-                        title: Text('Room ${room.id.substring(0, 6)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        title: Text(room.displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
                         subtitle: Text(room.lastMessage ?? 'No messages', maxLines: 1, overflow: TextOverflow.ellipsis),
                         trailing: room.unreadCount > 0
                             ? Badge(label: Text('${room.unreadCount}'))
