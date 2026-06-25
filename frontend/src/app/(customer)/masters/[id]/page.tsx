@@ -20,7 +20,7 @@ export default function MasterDetailPage() {
     Promise.all([
       mastersAPI.getById(id as string).then(res => setMaster(res.data)),
       reviewsAPI.getForMaster(id as string).then(res => setReviews(res.data.results || res.data)),
-    ]).catch(() => {}).finally(() => setLoading(false));
+    ]).catch(() => toast.error("Yuklashda xatolik")).finally(() => setLoading(false));
   }, [id]);
 
   const handleChat = async () => {
@@ -102,6 +102,12 @@ export default function MasterDetailPage() {
                     </div>
                   </div>
                   {review.comment && <p className="text-sm text-gray-600 dark:text-gray-400">{review.comment}</p>}
+                  {review.response && (
+                    <div className="mt-2 pl-3 border-l-2 border-primary/30 bg-primary-50/50 dark:bg-primary-900/10 rounded-r-[8px] p-2">
+                      <p className="text-xs font-medium text-primary mb-0.5">Master's response</p>
+                      <p className="text-xs text-gray-500">{review.response}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

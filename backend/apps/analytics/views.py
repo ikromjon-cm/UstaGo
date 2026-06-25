@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_tags
+from compat import extend_tags
 
 from apps.users.models import User, MasterProfile, Transaction
 from apps.orders.models import Order

@@ -3,10 +3,10 @@ export interface User {
   phone: string;
   full_name: string;
   avatar: string | null;
-  role: 'customer' | 'master' | 'company' | 'admin' | 'super_admin';
-  status: 'active' | 'inactive' | 'banned';
+  role: "customer" | "master" | "company" | "admin" | "super_admin";
+  status: "active" | "inactive" | "banned";
   bio: string;
-  lang: 'uz' | 'ru' | 'en';
+  lang: "uz" | "ru" | "en";
   is_phone_verified: boolean;
   is_identity_verified: boolean;
   created_at: string;
@@ -59,8 +59,16 @@ export interface Order {
   category: string;
   title: string;
   description: string;
-  status: 'pending' | 'looking_master' | 'offered' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
-  urgency: 'low' | 'normal' | 'high' | 'emergency';
+  status:
+    | "pending"
+    | "looking_master"
+    | "offered"
+    | "accepted"
+    | "in_progress"
+    | "completed"
+    | "cancelled"
+    | "disputed";
+  urgency: "low" | "normal" | "high" | "emergency";
   budget: number;
   final_price: number;
   latitude: number;
@@ -84,7 +92,7 @@ export interface OrderOffer {
   price: number;
   description: string;
   estimated_duration: number;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  status: "pending" | "accepted" | "rejected" | "expired";
   created_at: string;
 }
 
@@ -99,10 +107,28 @@ export interface Payment {
   id: string;
   order: string;
   customer: string;
-  master: string;
+  master: string | null;
   amount: number;
-  status: 'pending' | 'processing' | 'held' | 'completed' | 'refunded' | 'failed';
-  method: 'payme' | 'click' | 'uzum' | 'visa' | 'mastercard' | 'cash' | 'wallet';
+  commission_amount?: number;
+  net_amount?: number;
+  payment_url?: string;
+  status:
+    | "pending"
+    | "processing"
+    | "held"
+    | "completed"
+    | "refunded"
+    | "failed"
+    | "cancelled"
+    | "disputed";
+  method:
+    | "payme"
+    | "click"
+    | "uzum"
+    | "visa"
+    | "mastercard"
+    | "cash"
+    | "wallet";
   created_at: string;
 }
 
@@ -118,8 +144,35 @@ export interface Review {
   communication: number;
   professionalism: number;
   comment: string;
+  response: string;
+  responded_at: string | null;
   is_approved: boolean;
   created_at: string;
+}
+
+export interface Service {
+  id: string;
+  category: string;
+  title_uz: string;
+  title_ru: string;
+  title_en: string;
+  description: string;
+  price_from: number;
+  price_to: number;
+  duration_minutes: number;
+  icon: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface MasterSchedule {
+  id: string;
+  master: string;
+  date: string;
+  is_available: boolean;
+  start_time: string | null;
+  end_time: string | null;
 }
 
 export interface ChatRoom {
@@ -137,7 +190,7 @@ export interface Message {
   room: string;
   sender: string;
   sender_detail: User;
-  message_type: 'text' | 'image' | 'file' | 'voice' | 'location';
+  message_type: "text" | "image" | "file" | "voice" | "location";
   content: string;
   file: string | null;
   image: string | null;
@@ -147,7 +200,7 @@ export interface Message {
 
 export interface Notification {
   id: string;
-  type: 'order' | 'payment' | 'chat' | 'promo' | 'system';
+  type: "order" | "payment" | "chat" | "promo" | "system";
   title: string;
   body: string;
   data: Record<string, any>;
@@ -166,8 +219,14 @@ export interface Wallet {
 export interface Transaction {
   id: string;
   wallet: string;
-  type: 'deposit' | 'withdrawal' | 'payment' | 'refund' | 'commission' | 'bonus';
-  status: 'pending' | 'completed' | 'failed';
+  type:
+    | "deposit"
+    | "withdrawal"
+    | "payment"
+    | "refund"
+    | "commission"
+    | "bonus";
+  status: "pending" | "completed" | "failed";
   amount: number;
   net_amount: number;
   description: string;

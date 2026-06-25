@@ -1,82 +1,172 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowDownLeft, Banknote, DollarSign, Wallet } from "lucide-react";
+import toast from "react-hot-toast";
+
+import { Button } from "@/components/ui/Button";
+import { CardSkeleton, ListSkeleton } from "@/components/ui/Skeleton";
 import { walletAPI } from "@/lib/api";
-import { DollarSign, ArrowUpRight, ArrowDownRight, Wallet, Banknote } from "lucide-react";
+import { Transaction, Wallet as WalletType } from "@/types";
 
 export default function EarningsPage() {
-  const [wallet, setWallet] = useState<any>({ balance: 0, hold_balance: 0, total_earned: 0, total_withdrawn: 0 });
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [wallet, setWallet] = useState<WalletType | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [walletRes, transactionsRes] = await Promise.all([
+        walletAPI.getBalance(),
+        walletAPI.getTransactions(),
+      ]);
+
+      const transactionResults = Array.isArray(transactionsRes.data)
+        ? transactionsRes.data
+        : transactionsRes.data?.results || [];
+
+      setWallet(walletRes.data);
+      setTransactions(transactionResults);
+    } catch {
+      toast.error("Failed to load earnings");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    Promise.all([
-      walletAPI.getBalance().then(r => setWallet(r.data)),
-      walletAPI.getTransactions().then(r => setTransactions(r.data.results || r.data)),
-    ]).catch(() => {});
-  }, []);
+    loadData();
+  }, [loadData]);
+
+  const incomeTransactions = useMemo(
+    () =>
+      transactions.filter((transaction) =>
+        ["deposit", "payment", "refund", "bonus"].includes(transaction.type),
+      ),
+    [transactions],
+  );
+
+  const formatMoney = (value: number) =>
+    `${Number(value || 0).toLocaleString()} UZS`;
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main className="page-container py-6 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Earnings</h1>
-
-        <div className="card p-6 mb-6 text-center">
-          <p className="text-sm text-gray-500 mb-2">Available Balance</p>
-          <p className="text-4xl font-bold text-primary mb-4">{Number(wallet.balance).toLocaleString()} UZS</p>
-          <button className="btn-primary">Withdraw Funds</button>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Earnings</h1>
+          <Button variant="outline" size="sm" onClick={loadData}>
+            Refresh
+          </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {[
-            { label: "On Hold", value: wallet.hold_balance, icon: Wallet, color: "text-yellow-600 bg-yellow-100" },
-            { label: "Total Earned", value: wallet.total_earned, icon: DollarSign, color: "text-green-600 bg-green-100" },
-            { label: "Withdrawn", value: wallet.total_withdrawn, icon: Banknote, color: "text-blue-600 bg-blue-100" },
-          ].map(s => (
-            <div key={s.label} className="card p-4 text-center">
-              <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center ${s.color} mx-auto mb-2`}>
-                <s.icon size={18} />
-              </div>
-              <p className="text-lg font-bold">{Number(s.value).toLocaleString()}</p>
-              <p className="text-xs text-gray-500">{s.label}</p>
+        {loading ? (
+          <div className="space-y-6">
+            <CardSkeleton />
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <CardSkeleton key={i} />
+              ))}
             </div>
-          ))}
-        </div>
+            <ListSkeleton count={4} />
+          </div>
+        ) : (
+          <>
+            <div className="card p-6 mb-6 text-center bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
+              <p className="text-sm text-white/80 mb-2">Total Earned</p>
+              <p className="text-4xl font-bold mb-2">
+                {formatMoney(Number(wallet?.total_earned || 0))}
+              </p>
+              <p className="text-sm text-white/80">
+                Available for payout:{" "}
+                {formatMoney(Number(wallet?.balance || 0))}
+              </p>
+            </div>
 
-        <div className="card p-6">
-          <h3 className="font-semibold mb-4">Transaction History</h3>
-          {transactions.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">No transactions yet</p>
-          ) : (
-            <div className="space-y-3">
-              {transactions.map((t: any) => (
-                <div key={t.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center ${
-                      t.type === 'deposit' || t.type === 'payment' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                    }`}>
-                      {t.type === 'deposit' || t.type === 'payment' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm capitalize">{t.type}</p>
-                      <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleDateString()}</p>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {[
+                {
+                  label: "Available",
+                  value: wallet?.balance || 0,
+                  icon: Wallet,
+                  color: "text-blue-600 bg-blue-100",
+                },
+                {
+                  label: "On Hold",
+                  value: wallet?.hold_balance || 0,
+                  icon: DollarSign,
+                  color: "text-amber-600 bg-amber-100",
+                },
+                {
+                  label: "Withdrawn",
+                  value: wallet?.total_withdrawn || 0,
+                  icon: Banknote,
+                  color: "text-red-600 bg-red-100",
+                },
+              ].map((item) => (
+                <div key={item.label} className="card p-4 text-center">
+                  <div
+                    className={`w-10 h-10 rounded-[12px] flex items-center justify-center ${item.color} mx-auto mb-2`}
+                  >
+                    <item.icon size={18} />
                   </div>
-                  <div className="text-right">
-                    <p className={`font-semibold ${t.type === 'deposit' || t.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
-                      {t.type === 'deposit' || t.type === 'payment' ? '+' : '-'}{Number(t.amount).toLocaleString()} UZS
-                    </p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      t.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      t.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                    }`}>{t.status}</span>
-                  </div>
+                  <p className="text-lg font-bold">
+                    {formatMoney(Number(item.value))}
+                  </p>
+                  <p className="text-xs text-gray-500">{item.label}</p>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Recent Income</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.assign("/wallet")}
+                >
+                  Open wallet
+                </Button>
+              </div>
+
+              {incomeTransactions.length === 0 ? (
+                <p className="text-gray-400 text-center py-4">
+                  No earnings yet
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {incomeTransactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-green-100 text-green-600">
+                          <ArrowDownLeft size={18} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm capitalize">
+                            {transaction.description || transaction.type}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(
+                              transaction.created_at,
+                            ).toLocaleDateString()}{" "}
+                            • {transaction.status}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="font-semibold text-green-600">
+                        +{formatMoney(Number(transaction.amount))}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

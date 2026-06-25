@@ -47,6 +47,16 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
+export function GridSkeleton({ count = 8, cols = 4 }: { count?: number; cols?: number }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="skeleton h-28 animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
 export function ProfileSkeleton() {
   return (
     <div className="animate-pulse space-y-6">

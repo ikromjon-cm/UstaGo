@@ -43,10 +43,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: provider.notifications.length,
-                  itemBuilder: (ctx, i) => NotificationCard(notification: provider.notifications[i]),
+              : RefreshIndicator(
+                  onRefresh: () => provider.loadNotifications(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: provider.notifications.length,
+                    itemBuilder: (ctx, i) => NotificationCard(notification: provider.notifications[i]),
+                  ),
                 ),
     );
   }

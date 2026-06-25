@@ -19,9 +19,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _load() async {
     try {
-      final data = await ApiClient.get('/users/favorites/');
-      setState(() => _favorites = data['results'] as List<dynamic>? ?? data as List<dynamic>? ?? []);
-    } catch (_) {}
+      final data = await ApiClient.get('/favorites/');
+      final results = data is Map<String, dynamic>
+          ? (data['results'] as List<dynamic>? ?? <dynamic>[])
+          : (data as List<dynamic>? ?? <dynamic>[]);
+      setState(() => _favorites = results);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Xatolik: $e")));
+      }
+    }
     setState(() => _loading = false);
   }
 
@@ -44,34 +51,37 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _favorites.length,
-                  itemBuilder: (ctx, i) {
-                    final fav = _favorites[i] as Map<String, dynamic>;
-                    final master = fav['master_detail'] as Map<String, dynamic>?;
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          child: Text((master?['user']?['full_name']?[0] as String? ?? 'U').toUpperCase(),
-                              style: const TextStyle(color: Colors.white)),
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _favorites.length,
+                    itemBuilder: (ctx, i) {
+                      final fav = _favorites[i] as Map<String, dynamic>;
+                      final master = fav['master_detail'] as Map<String, dynamic>?;
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            child: Text((master?['user']?['full_name']?[0] as String? ?? 'U').toUpperCase(),
+                                style: const TextStyle(color: Colors.white)),
+                          ),
+                          title: Text(master?['user']?['full_name'] ?? 'Master'),
+                          subtitle: Text('Rating: ${master?['rating'] ?? "—"}'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.favorite, color: Colors.red),
+                            onPressed: () async {
+                              try {
+                                await ApiClient.delete('/favorites/${fav['id']}/');
+                                _load();
+                              } catch (_) {}
+                            },
+                          ),
+                          onTap: () => Navigator.pushNamed(context, '/master/${master?['id']}'),
                         ),
-                        title: Text(master?['user']?['full_name'] ?? 'Master'),
-                        subtitle: Text('Rating: ${master?['rating'] ?? "—"}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.favorite, color: Colors.red),
-                          onPressed: () async {
-                            try {
-                              await ApiClient.delete('/users/favorites/${fav['id']}/');
-                              _load();
-                            } catch (_) {}
-                          },
-                        ),
-                        onTap: () => Navigator.pushNamed(context, '/master/${master?['id']}'),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
     );
   }

@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from constance import config
+from django.conf import settings
 from .models import Order, OrderOffer, OrderStatusLog
 from apps.payments.models import Payment
 from apps.notifications.services import NotificationService
@@ -63,7 +63,7 @@ class OrderService:
             customer=order.customer,
             master=order.master.user,
             amount=order.final_price,
-            commission_percent=config.PLATFORM_COMMISSION,
+            commission_percent=settings.CONSTANCE_CONFIG['PLATFORM_COMMISSION'][0],
         )
         NotificationService.send_push(
             user=offer.master.user,

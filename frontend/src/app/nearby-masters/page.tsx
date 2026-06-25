@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Navigation, Star, ChevronRight } from "lucide-react";
+import toast from "react-hot-toast";
 import { mastersAPI } from "@/lib/api";
 import { Header } from "@/components/layout/Header";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 
 export default function NearbyMastersPage() {
   const router = useRouter();
@@ -15,13 +17,13 @@ export default function NearbyMastersPage() {
       (pos) => {
         mastersAPI.getNearby({ lat: pos.coords.latitude, lng: pos.coords.longitude })
           .then(res => setMasters(res.data.results || res.data))
-          .catch(() => {})
+          .catch(() => toast.error("Yuklashda xatolik"))
           .finally(() => setLoading(false));
       },
       () => {
         mastersAPI.getNearby({ lat: 41.2995, lng: 69.2401 })
           .then(res => setMasters(res.data.results || res.data))
-          .catch(() => {})
+          .catch(() => toast.error("Yuklashda xatolik"))
           .finally(() => setLoading(false));
       }
     );
@@ -50,7 +52,7 @@ export default function NearbyMastersPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="skeleton h-20 rounded-[12px]" />)}</div>
+          <ListSkeleton count={4} />
         ) : (
           <div className="space-y-3">
             {masters.map((m: any) => (

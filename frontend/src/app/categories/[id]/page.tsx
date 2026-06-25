@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, Clock, Star } from "lucide-react";
+import toast from "react-hot-toast";
 import { categoriesAPI, mastersAPI } from "@/lib/api";
 import { Header } from "@/components/layout/Header";
 import { MasterCard } from "@/components/ui/MasterCard";
@@ -25,7 +26,7 @@ export default function CategoryDetailPage() {
         setCategory(catRes);
         setServices(servRes.data.results || servRes.data);
         setMasters(masRes.data.results || masRes.data);
-      } catch (e) { console.error(e); }
+      } catch { toast.error("Yuklashda xatolik"); }
       setLoading(false);
     }
     load();

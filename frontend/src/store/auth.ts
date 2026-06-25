@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { setCookie, removeCookie } from "@/lib/cookies";
 
 interface User {
   id: string;
@@ -9,8 +10,8 @@ interface User {
   role: string;
   status: string;
   lang: string;
-  bio?: string;
   is_phone_verified: boolean;
+  bio?: string;
 }
 
 interface AuthState {
@@ -31,14 +32,21 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       setUser: (user) => set({ user, isAuthenticated: true }),
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      logout: () =>
+      setTokens: (accessToken, refreshToken) => {
+        setCookie("access_token", accessToken);
+        setCookie("refresh_token", refreshToken);
+        set({ accessToken, refreshToken });
+      },
+      logout: () => {
+        removeCookie("access_token");
+        removeCookie("refresh_token");
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
-        }),
+        });
+      },
     }),
     {
       name: "ustago-auth",

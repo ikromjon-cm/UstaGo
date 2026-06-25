@@ -2,7 +2,7 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey
-from versatileimagefield.fields import VersatileImageField
+from compat import VersatileImageField
 
 
 class Category(MPTTModel):

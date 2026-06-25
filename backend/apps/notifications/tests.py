@@ -18,7 +18,7 @@ class NotificationModelTests(TestCase):
             user=self.user, type='system',
             title='Test', body='Test body'
         )
-        self.assertEqual(str(notif), 'Test')
+        self.assertEqual(str(notif), 'system: Test')
         self.assertFalse(notif.is_read)
 
     def test_mark_as_read(self):

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import toast from "react-hot-toast";
 import { ordersAPI } from "@/lib/api";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "badge-warning", icon: Clock },
@@ -23,7 +25,7 @@ export default function OrdersPage() {
   useEffect(() => {
     ordersAPI.getMyOrders().then(res => {
       setOrders(res.data.results || res.data);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(() => toast.error("Yuklashda xatolik")).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -37,7 +39,7 @@ export default function OrdersPage() {
           </Link>
         </div>
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="skeleton h-24" />)}</div>
+          <ListSkeleton count={4} />
         ) : orders.length === 0 ? (
           <div className="card p-12 text-center">
             <p className="text-gray-400 mb-4">No orders yet</p>

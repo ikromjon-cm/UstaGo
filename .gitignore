@@ -2,64 +2,50 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
-build/
-.eggs/
-*.egg
-.venv/
 venv/
-env/
-
-# Django
-backend/logs/
-backend/media/
-backend/staticfiles/
-backend/static/
-*.db
+.venv/
 *.sqlite3
 
 # Node
 node_modules/
 .next/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-yarn.lock
+out/
 
 # Flutter
+mobile/build/
 mobile/.dart_tool/
 mobile/.packages
 mobile/.pub/
-mobile/build/
-mobile/.flutter-plugins
-mobile/.flutter-plugins-dependencies
-mobile/*.iml
-mobile/ios/.symlinks/
-mobile/ios/Pods/
-mobile/android/.gradle/
-mobile/android/local.properties
-mobile/android/key.properties
-mobile/android/app/build/
-
-# Environment
-.env
-.env.local
-.env.production
-.env.development
+*.apk
+*.aab
+*.ipa
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*~
+
+# Environment
+.env
+.env.local
+*.env.local
+
+# Media
+backend/media/
+backend/staticfiles/
+backend/logs/
+backend/backups/
+
+# OS
 .DS_Store
+Thumbs.db
 
 # Docker
-.docker/
+docker/ssl/
 
-# Misc
-*.log
-*.pid
-*.seed
+# Coverage
+coverage/
+htmlcov/
+.coverage
+*.coverage.xml

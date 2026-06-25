@@ -32,9 +32,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'full_name': _nameController.text,
         'phone': _phoneController.text,
         'password': _passwordController.text,
+        'confirm_password': _passwordController.text,
         'role': _role,
       });
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        '/verify-otp',
+        arguments: {
+          'phone': _phoneController.text,
+          'role': _role,
+        },
+      );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {

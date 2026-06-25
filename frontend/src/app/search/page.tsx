@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { MasterCard } from "@/components/ui/MasterCard";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
@@ -32,19 +33,7 @@ export default function SearchResultsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="animate-pulse card p-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-[14px] skeleton" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 w-48 skeleton" />
-                  <div className="h-3 w-32 skeleton" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ListSkeleton count={4} />
       ) : results.length === 0 ? (
         <div className="text-center py-16">
           <Search size={48} className="mx-auto text-gray-300 mb-4" />

@@ -14,7 +14,9 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final data = await ApiClient.get('/chat/rooms/');
-      final results = data['results'] as List<dynamic>? ?? data as List<dynamic>? ?? [];
+      final results = data is Map<String, dynamic>
+          ? (data['results'] as List<dynamic>? ?? <dynamic>[])
+          : (data as List<dynamic>? ?? <dynamic>[]);
       _rooms.clear();
       _rooms.addAll(results.map((r) => ChatRoom.fromJson(r as Map<String, dynamic>)));
     } catch (_) {}
@@ -24,7 +26,7 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> sendMessage(String roomId, String content) async {
     try {
-      await ApiClient.post('/chat/rooms/$roomId/messages/', body: {
+      await ApiClient.post('/chat/rooms/$roomId/send/', body: {
         'content': content,
         'message_type': 'text',
       });

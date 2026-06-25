@@ -3,7 +3,7 @@ from django.utils.decorators import method_decorator
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_tags
+from compat import extend_tags
 from .models import Category, Service
 from .serializers import CategorySerializer, CategoryListSerializer, ServiceSerializer
 
@@ -41,12 +41,14 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
+class ServiceViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        queryset = Service.objects.filter(is_active=True)
+        queryset = Service.objects.all()
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_active=True)
         category = self.request.query_params.get('category')
         if category:
             queryset = queryset.filter(category_id=category)

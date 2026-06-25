@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/theme.dart';
 import '../models/master.dart';
 
 class MasterCard extends StatelessWidget {
@@ -8,14 +7,16 @@ class MasterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/master/${master.id}'),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
         children: [
           Stack(
             children: [
@@ -78,6 +79,7 @@ class MasterCard extends StatelessWidget {
           const Icon(Icons.chevron_right, color: Colors.grey),
         ],
       ),
+    ),
     );
   }
 }

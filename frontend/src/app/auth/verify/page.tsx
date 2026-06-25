@@ -11,7 +11,12 @@ export default function OTPVerifyPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(60);
+  const [devOtp, setDevOtp] = useState("");
   const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    setDevOtp(localStorage.getItem("dev_otp") || "");
+  }, []);
 
   useEffect(() => {
     if (timer > 0) { const t = setTimeout(() => setTimer(t => t - 1), 1000); return () => clearTimeout(t); }
@@ -52,6 +57,11 @@ export default function OTPVerifyPage() {
         </div>
         <h1 className="text-2xl font-bold">Kodni tasdiqlang</h1>
         <p className="text-gray-500">{phone} raqamiga 6 xonali kod yuborildi</p>
+        {devOtp && (
+          <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 text-center text-lg font-bold py-2 px-4 rounded-lg mb-4">
+            DEV: {devOtp}
+          </div>
+        )}
         <div className="flex gap-2 justify-center">
           {otp.map((digit, i) => (
             <input key={i} ref={el => { refs.current[i] = el; }}

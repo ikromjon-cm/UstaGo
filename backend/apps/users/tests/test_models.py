@@ -113,3 +113,30 @@ class TestUserWalletModel:
         )
         assert user.wallet.balance == 0
         assert user.wallet.hold_balance == 0
+
+
+from django.test import TestCase
+from django.db import IntegrityError
+
+
+class UserModelAdditionalTests(TestCase):
+    def test_master_profile_created_on_role_master(self):
+        user = User.objects.create_user(
+            phone='+998901234040', full_name='Master New',
+            password='test123', username='+998901234040',
+            role='master'
+        )
+        self.assertTrue(hasattr(user, 'master_profile'))
+        self.assertIsNotNone(user.master_profile)
+        self.assertEqual(user.master_profile.completed_jobs, 0)
+
+    def test_user_phone_unique(self):
+        User.objects.create_user(
+            phone='+998901234041', full_name='First',
+            password='test123', username='+998901234041'
+        )
+        with self.assertRaises(IntegrityError):
+            User.objects.create_user(
+                phone='+998901234041', full_name='Second',
+                password='test123', username='+998901234042'
+            )

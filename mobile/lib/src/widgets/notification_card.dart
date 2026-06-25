@@ -21,7 +21,7 @@ class NotificationCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+          backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
           child: Icon(_typeIcon(notification.type), color: Theme.of(context).primaryColor),
         ),
         title: Text(notification.title, style: TextStyle(fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold)),

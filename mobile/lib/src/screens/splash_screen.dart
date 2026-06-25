@@ -20,6 +20,10 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     final auth = context.read<AuthProvider>();
+    while (!auth.initialized && mounted) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    if (!mounted) return;
     final route = auth.isAuthenticated
         ? (auth.user?.role == 'master' ? '/master-dashboard' : '/home')
         : '/login';
@@ -65,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
               "Uzbekistan's Service Marketplace",
               style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 fontSize: 14,
               ),
             ),

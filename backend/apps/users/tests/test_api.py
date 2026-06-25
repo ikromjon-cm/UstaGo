@@ -1,8 +1,9 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from django.contrib.auth import get_user_model
+
 from apps.categories.models import Category
 
 User = get_user_model()
@@ -14,62 +15,133 @@ class TestAuthAPI:
         self.client = APIClient()
 
     def test_register_customer(self):
-        resp = self.client.post('/api/v1/auth/register/', {
-            'phone': '+998901234567',
-            'full_name': 'Test User',
-            'password': 'testpass123',
-            'role': 'customer',
-        }, format='json')
+        resp = self.client.post(
+            "/api/v1/auth/register/",
+            {
+                "phone": "+998901234567",
+                "full_name": "Test User",
+                "password": "testpass123",
+                "role": "customer",
+            },
+            format="json",
+        )
         assert resp.status_code in [201, 200]
         data = resp.json()
-        assert data['user']['phone'] == '+998901234567'
-        assert data['user']['role'] == 'customer'
+        assert data["user"]["phone"] == "+998901234567"
+        assert data["user"]["role"] == "customer"
 
     def test_register_without_phone_fails(self):
-        resp = self.client.post('/api/v1/auth/register/', {
-            'full_name': 'No Phone',
-            'password': 'testpass123',
-        }, format='json')
+        resp = self.client.post(
+            "/api/v1/auth/register/",
+            {
+                "full_name": "No Phone",
+                "password": "testpass123",
+            },
+            format="json",
+        )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_login_success(self, django_user_model):
         user = django_user_model.objects.create_user(
-            phone='+998901234568', full_name='Login Test', password='testpass123'
+            phone="+998901234568", full_name="Login Test", password="testpass123"
         )
-        resp = self.client.post('/api/v1/auth/login/', {
-            'phone': '+998901234568',
-            'password': 'testpass123',
-        }, format='json')
+        resp = self.client.post(
+            "/api/v1/auth/login/",
+            {
+                "phone": "+998901234568",
+                "password": "testpass123",
+            },
+            format="json",
+        )
         assert resp.status_code in [200, 201]
         data = resp.json()
-        assert 'access' in data
+        assert "access" in data
 
     def test_login_wrong_password(self, django_user_model):
         django_user_model.objects.create_user(
-            phone='+998901234569', full_name='Wrong PW', password='testpass123'
+            phone="+998901234569", full_name="Wrong PW", password="testpass123"
         )
-        resp = self.client.post('/api/v1/auth/login/', {
-            'phone': '+998901234569',
-            'password': 'wrongpassword',
-        }, format='json')
+        resp = self.client.post(
+            "/api/v1/auth/login/",
+            {
+                "phone": "+998901234569",
+                "password": "wrongpassword",
+            },
+            format="json",
+        )
         assert resp.status_code in [400, 401]
 
     def test_profile_requires_auth(self):
-        resp = self.client.get('/api/v1/auth/profile/')
+        resp = self.client.get("/api/v1/auth/profile/")
         assert resp.status_code in [401, 403]
 
     def test_profile_authenticated(self, django_user_model):
         user = django_user_model.objects.create_user(
-            phone='+998901234570', full_name='Profile Test', password='testpass123'
+            phone="+998901234570", full_name="Profile Test", password="testpass123"
         )
-        resp = self.client.post('/api/v1/auth/login/', {
-            'phone': '+998901234570', 'password': 'testpass123'
-        }, format='json')
-        token = resp.json().get('access')
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-        resp = self.client.get('/api/v1/auth/profile/')
+        resp = self.client.post(
+            "/api/v1/auth/login/",
+            {"phone": "+998901234570", "password": "testpass123"},
+            format="json",
+        )
+        token = resp.json().get("access")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        resp = self.client.get("/api/v1/auth/profile/")
         assert resp.status_code == 200
-        assert resp.json()['phone'] == '+998901234570'
+        assert resp.json()["phone"] == "+998901234570"
+
+    def test_master_can_update_online_status(self, django_user_model):
+        user = django_user_model.objects.create_user(
+            phone="+998901234577",
+            full_name="Master Status",
+            password="testpass123",
+            role="master",
+        )
+        resp = self.client.post(
+            "/api/v1/auth/login/",
+            {
+                "phone": "+998901234577",
+                "password": "testpass123",
+            },
+            format="json",
+        )
+        token = resp.json().get("access")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        resp = self.client.patch(
+            "/api/v1/masters/update_status/",
+            {
+                "is_online": True,
+                "is_available": True,
+            },
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["is_online"] is True
+        assert resp.json()["is_available"] is True
+
+    def test_master_can_get_own_profile(self, django_user_model):
+        user = django_user_model.objects.create_user(
+            phone="+998901234578",
+            full_name="Master Me",
+            password="testpass123",
+            role="master",
+        )
+        resp = self.client.post(
+            "/api/v1/auth/login/",
+            {
+                "phone": "+998901234578",
+                "password": "testpass123",
+            },
+            format="json",
+        )
+        token = resp.json().get("access")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        resp = self.client.get("/api/v1/masters/me/")
+
+        assert resp.status_code == 200
+        assert resp.json()["user"]["id"] == str(user.id)
+        assert resp.json()["user"]["role"] == "master"
 
 
 @pytest.mark.django_db
@@ -78,14 +150,19 @@ class TestCategoriesAPI:
         self.client = APIClient()
 
     def test_list_categories(self):
-        Category.objects.create(title_uz='Santexnik', title_ru='Сантехник', title_en='Plumber', is_active=True)
-        resp = self.client.get('/api/v1/categories/')
+        Category.objects.create(
+            title_uz="Santexnik",
+            title_ru="Сантехник",
+            title_en="Plumber",
+            is_active=True,
+        )
+        resp = self.client.get("/api/v1/categories/")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data['results']) >= 1
+        assert len(data["results"]) >= 1
 
     def test_category_list_unauthenticated(self):
-        resp = self.client.get('/api/v1/categories/')
+        resp = self.client.get("/api/v1/categories/")
         assert resp.status_code in [200, 401]
 
 
@@ -96,26 +173,32 @@ class TestOrdersAPI:
 
     def test_create_order_authenticated(self, django_user_model):
         user = django_user_model.objects.create_user(
-            phone='+998901234571', full_name='Order User', password='testpass123'
+            phone="+998901234571", full_name="Order User", password="testpass123"
         )
-        cat = Category.objects.create(title_uz='Test', title_ru='Тест', title_en='Test')
-        resp = self.client.post('/api/v1/auth/login/', {
-            'phone': '+998901234571', 'password': 'testpass123'
-        }, format='json')
-        token = resp.json().get('access')
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-        resp = self.client.post('/api/v1/orders/', {
-            'category': cat.id,
-            'title': 'Fix pipe',
-            'budget': 100000,
-            'address': 'Tashkent',
-            'latitude': 41.3,
-            'longitude': 69.24,
-        }, format='json')
+        cat = Category.objects.create(title_uz="Test", title_ru="Тест", title_en="Test")
+        resp = self.client.post(
+            "/api/v1/auth/login/",
+            {"phone": "+998901234571", "password": "testpass123"},
+            format="json",
+        )
+        token = resp.json().get("access")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        resp = self.client.post(
+            "/api/v1/orders/",
+            {
+                "category": cat.id,
+                "title": "Fix pipe",
+                "budget": 100000,
+                "address": "Tashkent",
+                "latitude": 41.3,
+                "longitude": 69.24,
+            },
+            format="json",
+        )
         assert resp.status_code in [201, 200]
 
     def test_list_orders_unauthenticated(self):
-        resp = self.client.get('/api/v1/orders/')
+        resp = self.client.get("/api/v1/orders/")
         assert resp.status_code in [401, 403]
 
 
@@ -125,7 +208,45 @@ class TestHealthAPI:
         self.client = APIClient()
 
     def test_health_check(self):
-        resp = self.client.get('/api/v1/health/')
+        resp = self.client.get("/api/v1/health/")
         assert resp.status_code == 200
         data = resp.json()
-        assert 'status' in data
+        assert "status" in data
+
+
+from django.test import TestCase
+
+
+class ChangePasswordAPITests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            phone="+998901234099",
+            full_name="Test User",
+            password="oldpass123",
+            username="+998901234099",
+        )
+        self.client.force_login(self.user)
+
+    def test_change_password_success(self):
+        resp = self.client.post(
+            "/api/v1/auth/auth/change_password/",
+            {"old_password": "oldpass123", "new_password": "newpass456"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("newpass456"))
+
+    def test_change_password_wrong_old(self):
+        resp = self.client.post(
+            "/api/v1/auth/auth/change_password/",
+            {"old_password": "wrongpass", "new_password": "newpass456"},
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_change_password_unauthenticated(self):
+        self.client.logout()
+        resp = self.client.post(
+            "/api/v1/auth/auth/change_password/",
+            {"old_password": "oldpass123", "new_password": "newpass456"},
+        )
+        self.assertEqual(resp.status_code, 401)

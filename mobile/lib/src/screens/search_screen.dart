@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
-import '../services/master_service.dart';
 import '../models/master.dart';
 import '../widgets/master_card.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final String? initialQuery;
+  const SearchScreen({super.key, this.initialQuery});
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final _searchCtl = TextEditingController();
+  late final TextEditingController _searchCtl;
   List<Master> _results = [];
   bool _loading = false;
   bool _hasSearched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtl = TextEditingController(text: widget.initialQuery ?? '');
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _search());
+    }
+  }
 
   Future<void> _search() async {
     final query = _searchCtl.text.trim();
@@ -22,14 +31,19 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _loading = true);
     try {
       final data = await ApiClient.get('/masters/', params: {'search': query});
-      final results = data['results'] as List? ?? [];
+      final results = data is Map<String, dynamic>
+          ? (data['results'] as List? ?? <dynamic>[])
+          : (data as List? ?? <dynamic>[]);
       setState(() {
-        _results = results.map((e) => Master.fromJson(e)).toList();
+        _results = results.map((e) => Master.fromJson(e as Map<String, dynamic>)).toList();
         _hasSearched = true;
         _loading = false;
       });
     } catch (e) {
       setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Qidiruv xatolik: $e")));
+      }
     }
   }
 
@@ -86,12 +100,15 @@ class _SearchScreenState extends State<SearchScreen> {
                               ],
                             ),
                           )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _results.length,
-                            itemBuilder: (ctx, i) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: MasterCard(master: _results[i]),
+                        : RefreshIndicator(
+                            onRefresh: () => _search(),
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: _results.length,
+                              itemBuilder: (ctx, i) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: MasterCard(master: _results[i]),
+                              ),
                             ),
                           ),
           ),

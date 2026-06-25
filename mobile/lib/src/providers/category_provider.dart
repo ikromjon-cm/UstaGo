@@ -1,13 +1,20 @@
 import 'package:flutter/foundation.dart';
-import '../models/category.dart';
+import '../models/category.dart' as models;
+import '../models/service.dart';
 import '../services/category_service.dart';
 
 class CategoryProvider extends ChangeNotifier {
-  List<Category> _categories = [];
+  List<models.Category> _categories = [];
+  final Map<String, List<ServiceItem>> _servicesByCategory = {};
   bool _loading = false;
 
-  List<Category> get categories => _categories;
+  List<models.Category> get categories => _categories;
   bool get loading => _loading;
+
+  List<ServiceItem> servicesForCategory(String? categoryId) {
+    if (categoryId == null) return const [];
+    return _servicesByCategory[categoryId] ?? const [];
+  }
 
   Future<void> loadCategories() async {
     _loading = true;
@@ -19,5 +26,17 @@ class CategoryProvider extends ChangeNotifier {
     }
     _loading = false;
     notifyListeners();
+  }
+
+  Future<void> loadServices(String categoryId) async {
+    if (_servicesByCategory.containsKey(categoryId)) return;
+    try {
+      _servicesByCategory[categoryId] = await CategoryService.getServices(categoryId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Service load error: $e');
+      _servicesByCategory[categoryId] = const [];
+      notifyListeners();
+    }
   }
 }

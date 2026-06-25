@@ -26,7 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     try {
       await context.read<AuthProvider>().login(_phoneController.text, _passwordController.text);
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+      Navigator.pushReplacementNamed(context, auth.isMaster ? '/master-dashboard' : '/home');
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $e')));
     }

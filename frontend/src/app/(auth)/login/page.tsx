@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authAPI } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser, setTokens } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,7 +23,9 @@ export default function LoginPage() {
       setUser(res.data.user);
       setTokens(res.data.tokens.access, res.data.tokens.refresh);
       toast.success("Welcome back!");
-      router.push(res.data.user.role === "master" ? "/dashboard" : "/");
+      const redirect = searchParams.get("redirect");
+      const defaultRoute = res.data.user.role === "master" ? "/dashboard" : "/";
+      router.push(redirect || defaultRoute);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {
@@ -39,7 +42,9 @@ export default function LoginPage() {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Phone Number</label>
+            <label className="block text-sm font-medium mb-1">
+              Phone Number
+            </label>
             <input
               type="tel"
               className="input"
@@ -60,14 +65,20 @@ export default function LoginPage() {
               required
             />
           </div>
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-primary w-full"
+            disabled={loading}
+          >
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
             Don't have an account?{" "}
-            <Link href="/register" className="text-primary font-medium">Sign up</Link>
+            <Link href="/register" className="text-primary font-medium">
+              Sign up
+            </Link>
           </p>
         </div>
       </div>

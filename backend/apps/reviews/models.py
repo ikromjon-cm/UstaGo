@@ -2,7 +2,7 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
-from versatileimagefield.fields import VersatileImageField
+from compat import VersatileImageField
 
 
 class Review(models.Model):
@@ -37,6 +37,8 @@ class Review(models.Model):
         default=5, verbose_name=_('Professionalism')
     )
     comment = models.TextField(blank=True, verbose_name=_('Comment'))
+    response = models.TextField(blank=True, verbose_name=_('Response'))
+    responded_at = models.DateTimeField(null=True, blank=True)
     is_reported = models.BooleanField(default=False)
     report_reason = models.TextField(blank=True)
     is_approved = models.BooleanField(default=True)

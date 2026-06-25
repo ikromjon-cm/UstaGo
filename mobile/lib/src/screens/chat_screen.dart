@@ -17,7 +17,11 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         await ApiClient.get('/chat/rooms/');
         if (mounted) context.read<ChatProvider>().loadRooms();
-      } catch (_) {}
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Xatolik: $e")));
+        }
+      }
     });
   }
 
@@ -40,10 +44,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: chat.rooms.length,
-                  itemBuilder: (ctx, i) {
+              : RefreshIndicator(
+                  onRefresh: () => chat.loadRooms(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: chat.rooms.length,
+                    itemBuilder: (ctx, i) {
                     final room = chat.rooms[i];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -61,7 +67,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         onTap: () => Navigator.pushNamed(context, '/chat/${room.id}'),
                       ),
                     );
-                  },
+                    },
+                  ),
                 ),
     );
   }

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_tags
+from compat import extend_tags
 
 from .services import AIService
 from .models import AIAnalysis, FraudDetectionResult, AIRecommendation, AIChatLog

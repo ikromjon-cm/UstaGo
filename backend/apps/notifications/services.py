@@ -1,29 +1,9 @@
 import json
-import os
 from django.conf import settings
 from .models import Notification
 
 
 class NotificationService:
-    _firebase_initialized = False
-
-    @classmethod
-    def _init_firebase(cls):
-        if cls._firebase_initialized:
-            return
-        try:
-            import firebase_admin
-            if not firebase_admin._apps:
-                cred_path = os.environ.get('FIREBASE_CREDENTIALS', '')
-                if cred_path and os.path.exists(cred_path):
-                    cred = firebase_admin.credentials.Certificate(cred_path)
-                    firebase_admin.initialize_app(cred)
-                else:
-                    firebase_admin.initialize_app()
-            cls._firebase_initialized = True
-        except Exception:
-            cls._firebase_initialized = True
-
     @staticmethod
     def send_push(user, title, body, data=None, ntype='system'):
         notification = Notification.objects.create(
@@ -35,8 +15,9 @@ class NotificationService:
         )
         if user.fcm_token:
             try:
-                NotificationService._init_firebase()
-                from firebase_admin import messaging
+                from firebase_admin import messaging, initialize_app, credentials
+                if not messaging:
+                    pass
                 message = messaging.Message(
                     notification=messaging.Notification(
                         title=title,

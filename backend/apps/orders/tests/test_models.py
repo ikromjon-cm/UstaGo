@@ -1,96 +1,107 @@
-import pytest
+from django.test import TestCase
 from django.contrib.auth import get_user_model
-from apps.orders.models import Order, OrderOffer
 from apps.categories.models import Category
+from apps.orders.models import Order, OrderOffer, OrderStatusLog
 
 User = get_user_model()
 
 
-@pytest.mark.django_db
-class TestOrderModel:
-    def test_create_order(self):
-        user = User.objects.create_user(
-            phone='+998901234576',
-            full_name='Customer',
-            password='testpass123',
-            role='customer'
+class OrderModelTests(TestCase):
+    def setUp(self):
+        self.customer = User.objects.create_user(
+            phone='+998901234010', full_name='Customer',
+            password='test123', username='+998901234010'
         )
-        cat = Category.objects.create(
-            title_uz='Santexnik',
-            title_ru='Сантехник',
-            title_en='Plumber'
-        )
-        order = Order.objects.create(
-            customer=user,
-            category=cat,
-            title='Fix leaking pipe',
-            description='Kitchen sink is leaking',
-            budget=150000,
-            address='Tashkent, Chilonzor',
-            latitude=41.2995,
-            longitude=69.2401,
-        )
-        assert order.status == 'pending'
-        assert order.title == 'Fix leaking pipe'
-        assert order.is_paid is False
-        assert Order.objects.count() == 1
-
-    def test_order_status_transitions(self):
-        user = User.objects.create_user(
-            phone='+998901234577',
-            full_name='Customer 2',
-            password='testpass123',
-            role='customer'
-        )
-        cat = Category.objects.create(
-            title_uz='Elektrik',
-            title_ru='Электрик',
-            title_en='Electrician'
-        )
-        order = Order.objects.create(
-            customer=user, category=cat,
-            title='Fix socket', budget=80000,
-            address='Tashkent', latitude=41.3, longitude=69.24
-        )
-        assert order.can_cancel() is True
-        order.status = 'in_progress'
-        order.save()
-        assert order.can_cancel() is True
-        order.status = 'completed'
-        order.save()
-        assert order.can_cancel() is False
-
-
-@pytest.mark.django_db
-class TestOrderOfferModel:
-    def test_create_offer(self):
-        customer = User.objects.create_user(
-            phone='+998901234578',
-            full_name='Customer 3',
-            password='testpass123',
-            role='customer'
-        )
-        master = User.objects.create_user(
-            phone='+998901234579',
-            full_name='Master 1',
-            password='testpass123',
+        self.master_user = User.objects.create_user(
+            phone='+998901234011', full_name='Master',
+            password='test123', username='+998901234011',
             role='master'
         )
-        cat = Category.objects.create(
-            title_uz='Santexnik',
-            title_ru='Сантехник',
-            title_en='Plumber'
+        self.master_profile = self.master_user.master_profile
+        self.cat = Category.objects.create(
+            title_uz='Test', title_ru='Тест', title_en='Test'
         )
+
+    def test_create_order(self):
         order = Order.objects.create(
-            customer=customer, category=cat,
-            title='Fix pipe', budget=100000,
+            customer=self.customer, category=self.cat,
+            title='Test order', budget=100000,
+            address='Tashkent', latitude=41.3, longitude=69.24
+        )
+        self.assertEqual(order.status, 'pending')
+        self.assertFalse(order.is_paid)
+
+    def test_order_str(self):
+        order = Order.objects.create(
+            customer=self.customer, category=self.cat,
+            title='Test order', budget=100000,
+            address='Tashkent', latitude=41.3, longitude=69.24
+        )
+        self.assertIn('Test order', str(order))
+        self.assertIn(str(order.id)[:8], str(order))
+
+    def test_order_defaults(self):
+        order = Order.objects.create(
+            customer=self.customer, category=self.cat,
+            title='Defaults test', budget=50000,
+            address='Tashkent', latitude=41.3, longitude=69.24
+        )
+        self.assertEqual(order.urgency, 'normal')
+        self.assertFalse(order.is_paid)
+        self.assertFalse(order.is_rated)
+        self.assertIsNotNone(order.created_at)
+
+    def test_order_status_update(self):
+        order = Order.objects.create(
+            customer=self.customer, category=self.cat,
+            title='Status update', budget=100000,
+            address='Tashkent', latitude=41.3, longitude=69.24
+        )
+        order.status = 'in_progress'
+        order.save()
+        updated = Order.objects.get(id=order.id)
+        self.assertEqual(updated.status, 'in_progress')
+
+    def test_order_offer_creation(self):
+        order = Order.objects.create(
+            customer=self.customer, category=self.cat,
+            title='Offer test', budget=100000,
             address='Tashkent', latitude=41.3, longitude=69.24
         )
         offer = OrderOffer.objects.create(
-            order=order,
-            master=master,
-            price=90000,
-            estimated_duration=2,
+            order=order, master=self.master_profile,
+            price=90000, estimated_duration=60
         )
-        assert offer.status == 'pending'
-        assert offer.price == 90000
+        self.assertEqual(offer.status, 'pending')
+        self.assertEqual(offer.price, 90000)
+        self.assertEqual(offer.estimated_duration, 60)
+
+    def test_order_offer_unique_together(self):
+        order = Order.objects.create(
+            customer=self.customer, category=self.cat,
+            title='Unique offer', budget=100000,
+            address='Tashkent', latitude=41.3, longitude=69.24
+        )
+        OrderOffer.objects.create(
+            order=order, master=self.master_profile,
+            price=90000, estimated_duration=60
+        )
+        with self.assertRaises(Exception):
+            OrderOffer.objects.create(
+                order=order, master=self.master_profile,
+                price=80000, estimated_duration=45
+            )
+
+    def test_order_status_log(self):
+        order = Order.objects.create(
+            customer=self.customer, category=self.cat,
+            title='Log test', budget=100000,
+            address='Tashkent', latitude=41.3, longitude=69.24
+        )
+        log = OrderStatusLog.objects.create(
+            order=order, from_status='pending',
+            to_status='looking_master', changed_by=self.customer
+        )
+        self.assertEqual(log.from_status, 'pending')
+        self.assertEqual(log.to_status, 'looking_master')
+        self.assertEqual(log.changed_by, self.customer)

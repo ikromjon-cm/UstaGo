@@ -11,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<"phone" | "otp" | "reset">("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
+  const [devOtp, setDevOtp] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +19,10 @@ export default function ForgotPasswordPage() {
     if (!phone) return;
     setLoading(true);
     try {
-      await authAPI.sendOtp(phone);
+      const res = await authAPI.sendOtp(phone);
+      const otpCode = res.data.otp || "";
+      setDevOtp(otpCode);
+      if (otpCode) localStorage.setItem("dev_otp", otpCode);
       toast.success("OTP sent to your phone");
       setStep("otp");
     } catch { toast.error("Failed to send OTP"); }
@@ -69,6 +73,11 @@ export default function ForgotPasswordPage() {
 
       {step === "otp" && (
         <div className="space-y-4">
+          {devOtp && (
+            <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 text-center text-lg font-bold py-2 px-4 rounded-lg">
+              DEV: {devOtp}
+            </div>
+          )}
           <input className="input" placeholder="Enter OTP code" value={otp} onChange={e => setOtp(e.target.value)} maxLength={6} />
           <button onClick={handleVerifyOtp} disabled={loading || otp.length < 4} className="btn-primary w-full">
             {loading ? "Verifying..." : "Verify"}

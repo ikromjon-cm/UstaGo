@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Star, ChevronLeft, Send } from "lucide-react";
 import { ordersAPI, reviewsAPI } from "@/lib/api";
 import { Header } from "@/components/layout/Header";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 import toast from "react-hot-toast";
 
 const categories = ["Sifat", "Tezlik", "Muloqot", "Professionalizm"];
@@ -12,12 +13,14 @@ export default function CreateReviewPage() {
   const { id } = useParams();
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [ratings, setRatings] = useState({ quality: 5, speed: 5, communication: 5, professionalism: 5 });
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    ordersAPI.getById(id as string).then(r => setOrder(r.data)).catch(() => {});
+    ordersAPI.getById(id as string).then(r => setOrder(r.data)).catch(() => toast.error("Yuklashda xatolik"))
+      .finally(() => setLoading(false));
   }, [id]);
 
   const overall = Object.values(ratings).reduce((a, b) => a + b, 0) / 4;
@@ -49,7 +52,9 @@ export default function CreateReviewPage() {
 
         <h1 className="text-2xl font-bold mb-6">Sharh qoldirish</h1>
 
-        <div className="text-center mb-6">
+        {loading ? (
+          <CardSkeleton />
+        ) : (<><div className="text-center mb-6">
           <div className="text-5xl mb-2">
             {overall >= 4.5 ? "🌟" : overall >= 3.5 ? "👍" : overall >= 2.5 ? "😐" : "👎"}
           </div>
@@ -83,9 +88,10 @@ export default function CreateReviewPage() {
 
         <textarea className="input min-h-[100px] mb-6" placeholder="Sharhingizni yozing..." value={comment} onChange={e => setComment(e.target.value)} />
 
-        <button onClick={handleSubmit} className="btn-primary w-full flex items-center justify-center gap-2" disabled={submitting}>
+        <button onClick={handleSubmit} className="btn-primary w-full flex items-center justify-center gap-2" disabled={submitting || loading}>
           <Send size={18} /> {submitting ? "Yuborilmoqda..." : "Sharhni yuborish"}
         </button>
+        </>)}
       </main>
     </div>
   );

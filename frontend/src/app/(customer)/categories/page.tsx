@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import toast from "react-hot-toast";
 import { categoriesAPI } from "@/lib/api";
 import { Wrench, Zap, Hammer, PaintBucket, Droplets, Sofa, Tv, Smartphone, Search } from "lucide-react";
+import { GridSkeleton } from "@/components/ui/Skeleton";
 
 const iconMap: Record<string, any> = {
   santexnik: Droplets, elektrik: Zap, svarchik: Hammer, quruvchi: PaintBucket,
@@ -19,7 +21,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     categoriesAPI.getAll().then(res => {
       setCategories(res.data.results || res.data);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(() => toast.error("Yuklashda xatolik")).finally(() => setLoading(false));
   }, []);
 
   const filtered = categories.filter(c =>
@@ -36,11 +38,7 @@ export default function CategoriesPage() {
           <input className="input pl-12" placeholder="Search services..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="skeleton h-28" />
-            ))}
-          </div>
+          <GridSkeleton count={8} cols={4} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {filtered.map(cat => {

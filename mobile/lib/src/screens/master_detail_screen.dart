@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../services/api_client.dart';
 import '../services/master_service.dart';
 import '../models/master.dart';
 
@@ -25,6 +27,9 @@ class _MasterDetailScreenState extends State<MasterDetailScreen> {
       setState(() { _master = master; _loading = false; });
     } catch (e) {
       setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Xatolik: $e")));
+      }
     }
   }
 
@@ -61,14 +66,65 @@ class _MasterDetailScreenState extends State<MasterDetailScreen> {
             const SizedBox(height: 24),
             _statRow('Completed Jobs', m.completedJobs.toString()),
             _statRow('Price/hour', '${m.pricePerHour.toStringAsFixed(0)} UZS'),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: const Text('Hire Master', style: TextStyle(color: Colors.white, fontSize: 16)),
+            if (m.description.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text('About', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(m.description, style: const TextStyle(color: Colors.black87)),
+            ],
+            if (m.categoryNames.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text('Services', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: m.categoryNames
+                    .map((name) => Chip(label: Text(name), visualDensity: VisualDensity.compact))
+                    .toList(),
               ),
+            ],
+            const Spacer(),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      try {
+                        final data = await ApiClient.get('/chat/rooms/get_or_create/', params: {
+                          'user_id': m.userId,
+                        });
+                        if (!mounted) return;
+                        Navigator.pushNamed(context, '/chat/${data['id']}');
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chat error: $e')));
+                      }
+                    },
+                    child: const Text('Chat'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/create-order',
+                        arguments: {
+                          'categoryId': m.categoryIds.isNotEmpty ? m.categoryIds.first : null,
+                          'title': 'Need help from ${m.fullName}',
+                          'description': m.categoryNames.isNotEmpty
+                              ? 'Requesting ${m.categoryNames.first} service from ${m.fullName}'
+                              : 'Requesting service from ${m.fullName}',
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, padding: const EdgeInsets.symmetric(vertical: 16)),
+                    child: const Text('Hire Master', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

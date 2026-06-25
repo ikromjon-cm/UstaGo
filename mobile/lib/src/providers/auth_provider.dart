@@ -7,12 +7,14 @@ class AuthProvider extends ChangeNotifier {
   User? _user;
   String? _accessToken;
   bool _loading = false;
+  bool _initialized = false;
 
   User? get user => _user;
   String? get accessToken => _accessToken;
   bool get isAuthenticated => _user != null && _accessToken != null;
   bool get loading => _loading;
   bool get isMaster => _user?.role == 'master';
+  bool get initialized => _initialized;
 
   AuthProvider() {
     _loadFromStorage();
@@ -27,9 +29,13 @@ class AuthProvider extends ChangeNotifier {
         _user = await AuthService.getProfile();
       } catch (e) {
         debugPrint('Failed to load profile: $e');
+        await AuthService.logout();
+        _accessToken = null;
+        _user = null;
       }
-      notifyListeners();
     }
+    _initialized = true;
+    notifyListeners();
   }
 
   Future<void> login(String phone, String password) async {
@@ -47,16 +53,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> register(Map<String, dynamic> body) async {
+  Future<User> register(Map<String, dynamic> body) async {
     _loading = true;
     notifyListeners();
     try {
-      _user = await AuthService.register(body);
+      final user = await AuthService.register(body);
+      _user = user;
       _accessToken = (await SharedPreferences.getInstance()).getString('access_token');
+      return user;
     } finally {
       _loading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> refreshProfile() async {
+    if (_accessToken == null) return;
+    _user = await AuthService.getProfile();
+    notifyListeners();
+  }
+
+  Future<User> updateProfile(Map<String, dynamic> body) async {
+    final user = await AuthService.updateProfile(body);
+    _user = user;
+    notifyListeners();
+    return user;
   }
 
   Future<void> logout() async {

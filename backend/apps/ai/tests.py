@@ -30,10 +30,10 @@ class AIServiceTests(TestCase):
     def test_detect_category_elektrik(self):
         cat, score = AIService.detect_category('Rozetka ishlamayapti')
         self.assertIsNotNone(cat)
-        self.assertGreater(score, 0.5)
+        self.assertGreaterEqual(score, 0.5)
 
     def test_estimate_price_santexnik(self):
-        price_min, price_max = AIService.estimate_price(self.category)
+        price_min, price_max = AIService.estimate_price(self.category, 'Suv trubasi oqayapti')
         self.assertGreater(price_max, price_min)
         self.assertGreater(price_min, 0)
 

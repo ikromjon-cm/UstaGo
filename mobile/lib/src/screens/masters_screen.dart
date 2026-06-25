@@ -26,6 +26,9 @@ class _MastersScreenState extends State<MastersScreen> {
       setState(() { _masters = masters; _loading = false; });
     } catch (e) {
       setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Xatolik: $e")));
+      }
     }
   }
 
@@ -35,10 +38,13 @@ class _MastersScreenState extends State<MastersScreen> {
       appBar: AppBar(title: const Text('Masters')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _masters.length,
-              itemBuilder: (ctx, i) => MasterCard(master: _masters[i]),
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _masters.length,
+                itemBuilder: (ctx, i) => MasterCard(master: _masters[i]),
+              ),
             ),
     );
   }

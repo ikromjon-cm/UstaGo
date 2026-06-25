@@ -25,6 +25,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       setState(() { _categories = cats; _loading = false; });
     } catch (e) {
       setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Xatolik: $e")));
+      }
     }
   }
 
@@ -34,13 +37,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       appBar: AppBar(title: const Text('Categories')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12,
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12,
+                ),
+                itemCount: _categories.length,
+                itemBuilder: (ctx, i) => CategoryCard(category: _categories[i]),
               ),
-              itemCount: _categories.length,
-              itemBuilder: (ctx, i) => CategoryCard(category: _categories[i]),
             ),
     );
   }

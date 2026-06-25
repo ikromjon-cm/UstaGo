@@ -25,25 +25,31 @@ class AuthService {
   }
 
   static Future<void> sendOtp(String phone) async {
-    await ApiClient.post('/auth/send-otp/', body: {'phone': phone});
+    await ApiClient.post('/auth/send_otp/', body: {'phone': phone});
   }
 
-  static Future<User> verifyOtp(String phone, String otp) async {
-    final data = await ApiClient.post('/auth/verify-otp/', body: {
+  static Future<void> verifyOtp(String phone, String otp) async {
+    await ApiClient.post('/auth/verify_otp/', body: {
       'phone': phone,
       'otp': otp,
     });
-    final prefs = await SharedPreferences.getInstance();
-    if (data.containsKey('access')) {
-      await prefs.setString('access_token', data['access']);
-      await prefs.setString('refresh_token', data['refresh']);
-    }
-    return User.fromJson(data['user']);
   }
 
   static Future<User> getProfile() async {
     final data = await ApiClient.get('/auth/profile/');
     return User.fromJson(data);
+  }
+
+  static Future<User> updateProfile(Map<String, dynamic> body) async {
+    final data = await ApiClient.patch('/users/me/', body: body);
+    return User.fromJson(data as Map<String, dynamic>);
+  }
+
+  static Future<void> changePassword(String oldPassword, String newPassword) async {
+    await ApiClient.post('/auth/change_password/', body: {
+      'old_password': oldPassword,
+      'new_password': newPassword,
+    });
   }
 
   static Future<void> logout() async {

@@ -1,7 +1,8 @@
+from django.utils.timezone import now
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_tags
+from compat import extend_tags
 
 from .models import Review
 from .serializers import ReviewSerializer, ReviewCreateSerializer
@@ -35,11 +36,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if hasattr(order, 'review'):
             return Response({'error': 'Already reviewed'}, status=400)
         serializer = self.get_serializer(data=request.data)
+        serializer.context['order'] = order
         serializer.is_valid(raise_exception=True)
-        serializer.save(order=order, context={'order': order, 'request': request})
+        review = serializer.save()
         order.is_rated = True
         order.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        resp_serializer = ReviewSerializer(review)
+        return Response(resp_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'])
     def my_reviews(self, request):
@@ -58,6 +61,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         review.report_reason = reason
         review.save()
         return Response({'success': True})
+
+    @action(detail=True, methods=['post'])
+    def respond(self, request, pk=None):
+        review = self.get_object()
+        if review.target_user != request.user:
+            return Response({'error': 'Only the reviewed user can respond'}, status=403)
+        response_text = request.data.get('response', '')
+        review.response = response_text
+        review.responded_at = now()
+        review.save()
+        return Response(ReviewSerializer(review).data)
 
     @action(detail=False, methods=['get'])
     def for_master(self, request):

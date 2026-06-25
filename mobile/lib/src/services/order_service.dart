@@ -6,18 +6,26 @@ class OrderService {
     final params = <String, String>{};
     if (status != null) params['status'] = status;
     final data = await ApiClient.get('/orders/', params: params);
-    final results = data['results'] as List? ?? [];
-    return results.map((e) => Order.fromJson(e)).toList();
+    final results = data is Map<String, dynamic>
+        ? (data['results'] as List? ?? <dynamic>[])
+        : (data as List? ?? <dynamic>[]);
+    return results.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   static Future<Order> getOrder(String id) async {
     final data = await ApiClient.get('/orders/$id/');
-    return Order.fromJson(data);
+    return Order.fromJson(data as Map<String, dynamic>);
   }
 
   static Future<Order> createOrder(Map<String, dynamic> body) async {
-    final data = await ApiClient.post('/orders/', body: body);
-    return Order.fromJson(data);
+    final sanitized = <String, dynamic>{};
+    body.forEach((key, value) {
+      if (value == null) return;
+      if (value is String && value.trim().isEmpty) return;
+      sanitized[key] = value;
+    });
+    final data = await ApiClient.post('/orders/', body: sanitized);
+    return Order.fromJson(data as Map<String, dynamic>);
   }
 
   static Future<void> cancelOrder(String id) async {
@@ -26,6 +34,19 @@ class OrderService {
 
   static Future<void> acceptOffer(String orderId, String offerId) async {
     await ApiClient.post('/orders/$orderId/accept_offer/', body: {'offer_id': offerId});
+  }
+
+  static Future<void> makeOffer(
+    String orderId, {
+    required double price,
+    required int estimatedDuration,
+    String description = '',
+  }) async {
+    await ApiClient.post('/orders/$orderId/make_offer/', body: {
+      'price': price,
+      'description': description,
+      'estimated_duration': estimatedDuration,
+    });
   }
 
   static Future<void> confirmCompletion(String id) async {

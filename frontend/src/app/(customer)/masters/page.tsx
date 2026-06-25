@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { MasterCard } from "@/components/ui/MasterCard";
+import toast from "react-hot-toast";
 import { mastersAPI } from "@/lib/api";
 import { MapPin, Filter, Search } from "lucide-react";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 
 export default function MastersPage() {
   const [masters, setMasters] = useState<any[]>([]);
@@ -14,7 +16,7 @@ export default function MastersPage() {
   useEffect(() => {
     mastersAPI.getNearby({ lat: 41.2995, lng: 69.2401 }).then(res => {
       setMasters(res.data.results || res.data);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(() => toast.error("Yuklashda xatolik")).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -30,7 +32,7 @@ export default function MastersPage() {
           <input className="input pl-12" placeholder="Search masters..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {loading ? (
-          <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="skeleton h-24" />)}</div>
+          <ListSkeleton count={4} />
         ) : (
           <div className="space-y-3">
             {masters.filter(m => m.user?.full_name?.toLowerCase().includes(search.toLowerCase())).map(master => (

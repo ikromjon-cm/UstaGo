@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MessageCircle, ChevronRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import toast from "react-hot-toast";
 import { chatAPI } from "@/lib/api";
+import { ListSkeleton } from "@/components/ui/Skeleton";
 
 export default function ChatListPage() {
   const [rooms, setRooms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    chatAPI.getRooms().then(res => setRooms(res.data.results || res.data)).catch(() => {});
+    chatAPI.getRooms().then(res => setRooms(res.data.results || res.data)).catch(() => toast.error("Yuklashda xatolik"))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -18,7 +22,9 @@ export default function ChatListPage() {
       <Header />
       <main className="page-container py-6 max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Messages</h1>
-        {rooms.length === 0 ? (
+        {loading ? (
+          <ListSkeleton count={5} />
+        ) : rooms.length === 0 ? (
           <div className="card p-12 text-center">
             <MessageCircle size={48} className="mx-auto text-gray-300 mb-4" />
             <p className="text-gray-400">No conversations yet</p>
