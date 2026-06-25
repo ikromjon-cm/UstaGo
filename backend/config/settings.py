@@ -31,7 +31,6 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
-    "modeltranslation",
     "admin_interface",
     "admin_tools",
     "admin_tools.theming",
