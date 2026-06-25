@@ -1,7 +1,4 @@
-from django.contrib.auth import authenticate
-from django.core.cache import cache
 from django.db import transaction
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import MasterProfile, Transaction, User, UserAddress, UserWallet
 
@@ -19,25 +16,6 @@ class UserService:
         )
         otp = user.generate_otp()
         return user, otp
-
-    @staticmethod
-    def login(phone, password):
-        user = authenticate(username=phone, password=password)
-        if not user:
-            try:
-                user = User.objects.get(phone=phone)
-            except User.DoesNotExist:
-                return None, None
-            user = authenticate(username=user.username, password=password)
-            if not user:
-                return None, None
-        if user.status != User.Status.ACTIVE:
-            return None, "banned"
-        refresh = RefreshToken.for_user(user)
-        return user, {
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-        }
 
     @staticmethod
     def send_otp(user):

@@ -90,15 +90,16 @@ class _MasterDetailScreenState extends State<MasterDetailScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () async {
+                      final navCtx = context;
                       try {
                         final data = await ApiClient.get('/chat/rooms/get_or_create/', params: {
                           'user_id': m.userId,
                         });
-                        if (!mounted) return;
-                        Navigator.pushNamed(context, '/chat/${data['id']}');
+                        if (!navCtx.mounted) return;
+                        Navigator.pushNamed(navCtx, '/chat/${data['id']}');
                       } catch (e) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chat error: $e')));
+                        if (!navCtx.mounted) return;
+                        ScaffoldMessenger.of(navCtx).showSnackBar(SnackBar(content: Text('Chat error: $e')));
                       }
                     },
                     child: const Text('Chat'),

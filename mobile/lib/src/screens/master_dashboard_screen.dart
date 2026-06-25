@@ -101,14 +101,15 @@ class _MasterDashboardScreenState extends State<MasterDashboardScreen> {
                   estimatedDuration: duration,
                   description: descriptionCtl.text.trim(),
                 );
-                if (!mounted) return;
+                if (!sheetContext.mounted) return;
                 Navigator.pop(sheetContext);
-                ScaffoldMessenger.of(this.context).showSnackBar(
+                if (!mounted) return;
+                if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(
                   const SnackBar(content: Text('Offer sent successfully')),
                 );
                 await _refresh();
               } catch (e) {
-                if (!mounted) return;
+                if (!sheetContext.mounted) return;
                 ScaffoldMessenger.of(sheetContext).showSnackBar(
                   SnackBar(content: Text('Failed to send offer: $e')),
                 );
