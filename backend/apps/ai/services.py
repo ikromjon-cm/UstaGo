@@ -1,16 +1,45 @@
 import json
 import re
+import logging
 from django.conf import settings
 from .models import AIAnalysis, FraudDetectionResult, AIRecommendation, AIChatLog
+from .openai_service import OpenAIService
 from apps.categories.models import Category
 from apps.users.models import MasterProfile
+
+logger = logging.getLogger(__name__)
 
 
 class AIService:
     @staticmethod
     def analyze_request(text):
-        category, confidence = AIService.detect_category(text)
-        price_min, price_max = AIService.estimate_price(category, text)
+        category, confidence = None, 0.0
+
+        openai_result = OpenAIService.categorize(text)
+        if openai_result:
+            category_name = openai_result.get("category", "")
+            confidence = openai_result.get("confidence", 0.0)
+            if category_name:
+                cat = Category.objects.filter(is_active=True, title_uz__icontains=category_name).first()
+                if not cat:
+                    cat = Category.objects.filter(is_active=True).filter(
+                        title_ru__icontains=category_name
+                    ).first()
+                if cat:
+                    category = cat
+
+        if not category:
+            category, confidence = AIService._keyword_detect_category(text)
+
+        ai_price = None
+        if category:
+            ai_price = OpenAIService.estimate_price(category.title_uz, text)
+
+        if ai_price:
+            price_min, price_max = ai_price.get("price_min", 0), ai_price.get("price_max", 0)
+        else:
+            price_min, price_max = AIService._keyword_estimate_price(category, text)
+
         nearby_count = 0
         if category:
             nearby_count = MasterProfile.objects.filter(
@@ -40,6 +69,14 @@ class AIService:
 
     @staticmethod
     def detect_category(text):
+        return AIService._keyword_detect_category(text)
+
+    @staticmethod
+    def estimate_price(category, text):
+        return AIService._keyword_estimate_price(category, text)
+
+    @staticmethod
+    def _keyword_detect_category(text):
         text_lower = text.lower()
         categories = Category.objects.filter(is_active=True)
         best_match = None
@@ -77,7 +114,7 @@ class AIService:
         return best_match, best_score
 
     @staticmethod
-    def estimate_price(category, text):
+    def _keyword_estimate_price(category, text):
         if not category:
             return 50000, 200000
         base_price = 100000
@@ -94,6 +131,16 @@ class AIService:
         if cat_name in ranges:
             return ranges[cat_name]
         return (base_price // 2, base_price * 2)
+
+    @staticmethod
+    def estimate_price_for_text(text, category=None):
+        if not category:
+            cat, _ = AIService._keyword_detect_category(text)
+            category = cat
+        ai_price = OpenAIService.estimate_price(category.title_uz if category else '', text) if settings.OPENAI_API_KEY else None
+        if ai_price:
+            return ai_price.get('price_min', 0), ai_price.get('price_max', 0)
+        return AIService._keyword_estimate_price(category, text)
 
     @staticmethod
     def detect_fraud(target_type, target_id, data=None):
@@ -174,7 +221,11 @@ class AIService:
         intent = 'general'
         response = ''
 
-        if 'salom' in text or 'assalom' in text or 'hello' in text or 'hi' in text:
+        openai_response = OpenAIService.chat(message, user.full_name)
+        if openai_response:
+            response = openai_response
+            intent = 'ai'
+        elif 'salom' in text or 'assalom' in text or 'hello' in text or 'hi' in text:
             intent = 'greeting'
             response = f'Assalomu alaykum! {user.full_name}. UstaGo AI yordamchisiga xush kelibsiz. Qanday xizmat kerak?'
         elif 'santexnik' in text or 'truba' in text or 'quvur' in text:

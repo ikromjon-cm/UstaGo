@@ -37,9 +37,9 @@ class AIViewSet(viewsets.ViewSet):
             except Category.DoesNotExist:
                 pass
         if not category:
-            cat_result, _ = AIService.detect_category(text)
+            cat_result, _ = AIService._keyword_detect_category(text)
             category = cat_result
-        price_min, price_max = AIService.estimate_price(category, text)
+        price_min, price_max = AIService.estimate_price_for_text(text, category)
         return Response({
             'price_min': float(price_min),
             'price_max': float(price_max),
