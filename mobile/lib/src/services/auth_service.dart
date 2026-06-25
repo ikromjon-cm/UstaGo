@@ -1,6 +1,6 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import 'api_client.dart';
+import 'secure_storage.dart';
 
 class AuthService {
   static Future<User> login(String phone, String password) async {
@@ -8,18 +8,14 @@ class AuthService {
       'phone': phone,
       'password': password,
     });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('access_token', data['access']);
-    await prefs.setString('refresh_token', data['refresh']);
+    await SecureStorage.saveTokens(data['access'], data['refresh']);
     return User.fromJson(data['user']);
   }
 
   static Future<User> register(Map<String, dynamic> body) async {
     final data = await ApiClient.post('/auth/register/', body: body);
-    final prefs = await SharedPreferences.getInstance();
     if (data.containsKey('access')) {
-      await prefs.setString('access_token', data['access']);
-      await prefs.setString('refresh_token', data['refresh']);
+      await SecureStorage.saveTokens(data['access'], data['refresh']);
     }
     return User.fromJson(data['user'] ?? data);
   }
@@ -53,13 +49,11 @@ class AuthService {
   }
 
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
-    await prefs.remove('refresh_token');
+    await SecureStorage.clearTokens();
   }
 
   static Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey('access_token');
+    final token = await SecureStorage.getAccessToken();
+    return token != null;
   }
 }

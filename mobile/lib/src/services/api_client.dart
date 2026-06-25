@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'secure_storage.dart';
 
 class ApiClient {
   static String get baseUrl {
@@ -17,8 +17,7 @@ class ApiClient {
   static const Duration timeout = Duration(seconds: 30);
 
   static Future<Map<String, String>> _headers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
+    final token = await SecureStorage.getAccessToken();
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -69,8 +68,7 @@ class ApiClient {
       return decoded is List || decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
     }
     if (resp.statusCode == 401 && originalPath != null) {
-      final prefs = await SharedPreferences.getInstance();
-      final refreshToken = prefs.getString('refresh_token');
+      final refreshToken = await SecureStorage.getRefreshToken();
       if (refreshToken != null) {
         try {
           final refreshResp = await http.post(
@@ -81,7 +79,7 @@ class ApiClient {
           if (refreshResp.statusCode == 200) {
             final refreshData = jsonDecode(refreshResp.body);
             final newAccess = refreshData['access'] as String;
-            await prefs.setString('access_token', newAccess);
+            await SecureStorage.saveTokens(newAccess, refreshToken);
             final retryHeaders = await _headers();
             http.Response retryResp;
             switch (originalMethod) {
@@ -110,8 +108,7 @@ class ApiClient {
             }
           }
         } catch (_) {}
-        await prefs.remove('access_token');
-        await prefs.remove('refresh_token');
+        await SecureStorage.clearTokens();
       }
     }
     if (decoded is Map<String, dynamic>) {

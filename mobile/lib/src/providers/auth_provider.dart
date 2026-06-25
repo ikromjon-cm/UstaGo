@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/secure_storage.dart';
 
 class AuthProvider extends ChangeNotifier {
   User? _user;
@@ -21,8 +21,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _loadFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
+    final token = await SecureStorage.getAccessToken();
     if (token != null) {
       _accessToken = token;
       try {
@@ -43,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _user = await AuthService.login(phone, password);
-      _accessToken = (await SharedPreferences.getInstance()).getString('access_token');
+      _accessToken = await SecureStorage.getAccessToken();
     } catch (e) {
       debugPrint('Login error: $e');
       rethrow;
@@ -59,7 +58,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = await AuthService.register(body);
       _user = user;
-      _accessToken = (await SharedPreferences.getInstance()).getString('access_token');
+      _accessToken = await SecureStorage.getAccessToken();
       return user;
     } finally {
       _loading = false;

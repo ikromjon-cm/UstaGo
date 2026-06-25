@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
+import 'secure_storage.dart';
 
 enum WsConnectionState { disconnected, connecting, connected, reconnecting }
 
@@ -42,8 +42,7 @@ class WebSocketService {
   }
 
   static Future<String?> _defaultTokenProvider() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
+    return SecureStorage.getAccessToken();
   }
 
   Future<void> connect(
