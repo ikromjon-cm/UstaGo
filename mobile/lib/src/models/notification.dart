@@ -5,6 +5,7 @@ class AppNotification {
   final String body;
   final bool isRead;
   final String createdAt;
+  final Map<String, dynamic> data;
 
   AppNotification({
     required this.id,
@@ -13,6 +14,7 @@ class AppNotification {
     required this.body,
     this.isRead = false,
     required this.createdAt,
+    this.data = const {},
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
@@ -22,5 +24,6 @@ class AppNotification {
     body: json['body'] ?? '',
     isRead: json['is_read'] ?? false,
     createdAt: json['created_at'],
+    data: json['data'] is Map ? Map<String, dynamic>.from(json['data']) : {},
   );
 }
